@@ -1,7 +1,7 @@
 ## 超シンプルメモ帳(MemoApp)
 
 ### 起動画面
-<img src="image/MemoApp_MainActivity.png" width="80%">
+<img src="image/MemoApp_MainActivity.png" width="60%">
 
 
 ### 画面
