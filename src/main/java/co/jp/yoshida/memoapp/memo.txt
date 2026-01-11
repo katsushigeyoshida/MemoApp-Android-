@@ -1,0 +1,35 @@
+MemoApp
+超シンプルなメモアプリ
+
+画面
+[新規][前][次][削除][他]
+[タイトル(作成開始日付時間)]
+[テキスト本文            ]
+
+機能
+作成開始の日付時間をタイトルにしてテキストでメモの内容を記述
+メモは日付順にソートされ、[前]ボタンと[次]ボタンで切り替える
+オプションとして[他]ボタンから文字サイズの選択と全データ削除がある
+
+今後の検討
+・検索機能
+・分類
+・目次リスト
+・テキスト内の数値計算(集計)
+・テキストファイルへのエクスポートまたはインポート機能
+・画像などのファイルの添付(内部データ/外部参照)
+
+履歴
+2026/01/11 基本機能を作成
+
+開発環境
+Android Studio Otter 2 Feature Drop | 2025.2.2 Patch 1
+Kotlin + jetpack Compose + SQLite
+
+echo "# MemoApp-Android-" >> README.md
+git init
+git add README.md
+git commit -m "first commit"
+git branch -M main
+git remote add origin https://github.com/katsushigeyoshida/MemoApp-Android-.git
+git push -u origin main

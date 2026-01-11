@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">めも</string>
+    <string name="MyTextFieldLabel">This is Memo</string>
+    <string name="MyNaviLabel1">AddItem</string>
+    <string name="MyNaviLabel2">EditItem</string>
+    <string name="MyNaviLabel3">DeleteItem</string>
+</resources>
