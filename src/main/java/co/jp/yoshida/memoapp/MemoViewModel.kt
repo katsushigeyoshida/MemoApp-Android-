@@ -45,12 +45,14 @@ class MemoViewModel(context: Context): ViewModel() {
         pos = if (pos < 0) 2 else pos
         textFontSize = mutableStateOf(fontSizeList[pos])
         //  既存データの読込
-        loadList()
+        loadList()                          //  DBからの読込
         var n = 0
         if (memoList.count() == 0)
             n = newData()                   //  既存データなし
-        else
-            n = memoTitleList.count() - 1   //  最新データ
+        else {
+            n = getIntPreferences("CURRENTPAGENO", memoTitleList.count() - 1, myContext)
+
+        }
         setDisplay(n)
     }
 
@@ -58,10 +60,14 @@ class MemoViewModel(context: Context): ViewModel() {
      * 終了処理
      */
     fun dbClose() {
+        //  文字サイズ
         val n = fontSizeList.indexOf<TextUnit>(textFontSize.value)
         setIntPreferences(n, "TEXTFONTSIZE", myContext)
-        save()
-        saveList()
+        //  ページ番号保存
+        setIntPreferences(curPageNo(), "CURRENTPAGENO", myContext)
+        //  内容をDBに保存
+        save()              //  現ページを登録
+        saveList()          //  全ページをDBに保存
         database.close()
     }
 
@@ -81,7 +87,6 @@ class MemoViewModel(context: Context): ViewModel() {
         save()
         var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
         var n = memoTitleList.indexOf(title)
-        Log.d(TAG,"nextDisplay "+n+" "+memoList.count()+" "+memoTitle.value+" "+memoText.value)
         setDisplay(n + 1)
     }
 
@@ -92,7 +97,6 @@ class MemoViewModel(context: Context): ViewModel() {
         save()
         var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
         var n = memoTitleList.indexOf(title)
-        Log.d(TAG,"prevDisplay "+n+" "+memoList.count()+" "+memoTitle.value+" "+memoText.value)
         setDisplay(max(n - 1, 0))
     }
 
@@ -101,13 +105,13 @@ class MemoViewModel(context: Context): ViewModel() {
      */
     fun remove() {
         var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
-        if (memoList.containsKey(title)) {
+        if (memoList.containsKey(title))
             memoList.remove(title)
-            memoTitleList.remove(title)
-        }
         var n = memoList.count() - 1
         if (n < 0)
             n = newData()
+        else
+            makeTitleList()
         setDisplay(n)
     }
 
@@ -123,7 +127,6 @@ class MemoViewModel(context: Context): ViewModel() {
      * n: 表示するデータの番号
      */
     fun setDisplay(n: Int = -1) {
-        Log.d(TAG,"setDisplay "+n)
         if (0 <= n && n < memoTitleList.count()) {
             memoTitle.value = memoTitleList[n] + " " + getCount(memoTitleList[n])
             memoText.value = memoList[memoTitleList[n]].toString()
@@ -136,22 +139,10 @@ class MemoViewModel(context: Context): ViewModel() {
      */
     fun newData(): Int {
         var title = getNowDate()
-        Log.d(TAG,"newData "+title)
-        if (memoList.count() == 0)
-            memoTitleList.clear()
-        if (!memoList.containsKey(title))
+        if (memoList.count() == 0 || !memoList.containsKey(title))
             memoList.put(title,"")
         makeTitleList()
         return memoTitleList.indexOf(title)
-    }
-
-    /**
-     * データの数と位置を文字列に変換
-     */
-    fun getCount(title: String): String {
-        val n = memoTitleList.indexOf(title) + 1
-        val count = memoTitleList.count()
-        return "[$n / $count]"
     }
 
     /**
@@ -159,7 +150,6 @@ class MemoViewModel(context: Context): ViewModel() {
      */
     fun save() {
         var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
-        Log.d(TAG,"save ["+title+"] "+memoTitle.value+" "+memoText.value)
         if (memoList.containsKey(title)) {
             memoList[title] = memoText.value
         } else {
@@ -177,20 +167,40 @@ class MemoViewModel(context: Context): ViewModel() {
     }
 
     /**
-     * memoListからtitleListを作成
-     */
-    fun makeTitleList(){
-        if (0 < memoList.count()) {
-            memoTitleList = memoList.keys.toList() as MutableList<String>
-            memoTitleList.sort()
-        }
-    }
-
-    /**
      * 全データ保存
      */
     fun saveList() {
         database.setAllData(memoList)
+    }
+
+    /**
+     * 表示しているページ蛮行
+     */
+    fun curPageNo(): Int {
+        var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
+        return memoTitleList.indexOf(title)
+    }
+
+    /**
+     * データの数と位置を文字列に変換
+     */
+    fun getCount(title: String): String {
+        val n = memoTitleList.indexOf(title) + 1
+        val count = memoTitleList.count()
+        return "[$n / $count]"
+    }
+
+    /**
+     * memoListからtitleListを作成
+     */
+    fun makeTitleList(){
+        memoTitleList.clear()
+        if (0 < memoList.count()) {
+//            memoTitleList = memoList.keys.toList() as MutableList<String>
+            for (title in memoList.keys)
+                memoTitleList.add(title)
+            memoTitleList.sort()
+        }
     }
 
     /**

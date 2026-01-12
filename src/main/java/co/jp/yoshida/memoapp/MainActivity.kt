@@ -86,15 +86,15 @@ fun MyMemo(viewModel: MemoViewModel) {
             }
             Button(
                 modifier = Modifier.padding(end = 8.dp),
-                onClick = { viewModel.prevDisplay() }
-            ) {
-                Text(text = "前")
-            }
-            Button(
-                modifier = Modifier.padding(end = 8.dp),
                 onClick = { viewModel.nexeDisplay() }
             ) {
                 Text(text = "次")
+            }
+            Button(
+                modifier = Modifier.padding(end = 8.dp),
+                onClick = { viewModel.prevDisplay() }
+            ) {
+                Text(text = "前")
             }
             Button(
                 modifier = Modifier.padding(end = 8.dp),
