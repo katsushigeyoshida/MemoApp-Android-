@@ -1,6 +1,8 @@
 package co.jp.yoshida.memoapp
 
+import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -30,7 +32,7 @@ import androidx.compose.ui.unit.sp
 import co.jp.yoshida.memoapp.ui.theme.MyApplication4Theme
 
 class MainActivity : ComponentActivity() {
-
+    private  val TAG = "MainActivity"
     private val viewModel = MemoViewModel(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,6 +48,12 @@ class MainActivity : ComponentActivity() {
                     MyMemo(viewModel)
                 }
             }
+        }
+        //  共有を受け取る
+        if (intent != null) {
+            val type = intent.type
+            if (type != null && type.startsWith("text/"))
+                viewModel.memoText.value = intent.getStringExtra((Intent.EXTRA_TEXT)).toString()
         }
     }
 

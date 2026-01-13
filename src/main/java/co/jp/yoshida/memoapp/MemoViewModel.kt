@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.TextUnit
@@ -26,8 +27,8 @@ class MemoViewModel(context: Context): ViewModel() {
     val TAG = "MemoViewModel"
 
     val myContext = context
-    val memoTitle: MutableState<String> = mutableStateOf("2026/01/01 01:01:01")
-    val memoText: MutableState<String> = mutableStateOf("Memo Text")
+    val memoTitle: MutableState<String> = mutableStateOf("")
+    val memoText: MutableState<String> = mutableStateOf("")
     var textFontSize: MutableState<TextUnit> = mutableStateOf(16.sp)
 
     var memoList = mutableMapOf<String, String>()
@@ -50,11 +51,13 @@ class MemoViewModel(context: Context): ViewModel() {
         //  既存データの読込
         loadList()                          //  DBからの読込
         var n = 0
+        //  共有データあり
+        if (0 < memoText.value.length)
+            n = newData(memoText.value)
         if (memoList.count() == 0)
             n = newData()                   //  既存データなし
-        else {
+        else if (memoText.value.length == 0){
             n = getIntPreferences("CURRENTPAGENO", memoTitleList.count() - 1, myContext)
-
         }
         setDisplay(n)
     }
@@ -140,10 +143,11 @@ class MemoViewModel(context: Context): ViewModel() {
      * 新規データ
      * return: 新規データの番号
      */
-    fun newData(): Int {
+    fun newData(text: String = ""): Int {
+        Toast.makeText(myContext, text, Toast.LENGTH_LONG)
         var title = getNowDate()
         if (memoList.count() == 0 || !memoList.containsKey(title))
-            memoList.put(title,"")
+            memoList.put(title, text)
         makeTitleList()
         return memoTitleList.indexOf(title)
     }
