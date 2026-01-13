@@ -3,6 +3,7 @@ package co.jp.yoshida.memoapp
 import android.app.AlertDialog
 import android.content.Context
 import android.content.DialogInterface
+import android.content.Intent
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import android.util.Log
@@ -10,6 +11,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContentProviderCompat.requireContext
+import androidx.core.content.ContextCompat.startActivity
 import androidx.core.util.Consumer
 import androidx.lifecycle.ViewModel
 import java.time.LocalDateTime
@@ -32,7 +35,7 @@ class MemoViewModel(context: Context): ViewModel() {
 
     val fontSizeList = listOf(8.sp, 12.sp, 16.sp, 24.sp, 32.sp, 40.sp)
     val fontSizeListMenu = listOf("8.sp", "12.sp", "16.sp", "24.sp", "32.sp", "40.sp")
-    val optionMenu = listOf("文字サイズ選択", "全データ削除")
+    val optionMenu = listOf("共有", "文字サイズ選択", "全データ削除")
 
     val database: DatabaseHelper = DatabaseHelper(context)
 
@@ -208,8 +211,10 @@ class MemoViewModel(context: Context): ViewModel() {
      */
     var iOptionOperation = Consumer<String> { s ->
         if (s.compareTo(optionMenu[0]) == 0) {
-            setMenuDialog(myContext, "文字サイズ", fontSizeListMenu, iFontSizeOperation)
+            actionSend(memoText.value, myContext)
         } else if (s.compareTo(optionMenu[1]) == 0) {
+            setMenuDialog(myContext, "文字サイズ", fontSizeListMenu, iFontSizeOperation)
+        } else if (s.compareTo(optionMenu[2]) == 0) {
             messageDialog(myContext,"確認", "すべてのデータを削除します", iRemoveDataAll)
         }
     }
@@ -229,6 +234,21 @@ class MemoViewModel(context: Context): ViewModel() {
         memoTitleList.clear()
         var n = newData()
         setDisplay(n)
+    }
+
+    //  ===  システム  ===
+
+    /**
+     * 共有処理(テキスト)
+     */
+    fun actionSend(text: String, context: Context) {
+        val sendIntent = Intent().apply {
+            action = Intent.ACTION_SEND
+            type = "text/plain"
+            putExtra(Intent.EXTRA_TEXT, text)
+        }
+        val shareIntent = Intent.createChooser(sendIntent, null)
+        context.startActivity(shareIntent)
     }
 
 
