@@ -36,16 +36,17 @@ class MemoViewModel(context: Context): ViewModel() {
 
     val fontSizeList = listOf(8.sp, 12.sp, 16.sp, 24.sp, 32.sp, 40.sp)
     val fontSizeListMenu = listOf("8.sp", "12.sp", "16.sp", "24.sp", "32.sp", "40.sp")
-    val optionMenu = listOf("共有", "文字サイズ選択", "全データ削除")
+    val optionMenu = listOf("計算", "共有", "文字サイズ選択", "全データ削除")
 
     val database: DatabaseHelper = DatabaseHelper(context)
+    val klib = KLib()
 
     /**
      * 初期化
      */
     fun init(context: Context) {
         //  テキストの文字サイズ
-        var pos = getIntPreferences("TEXTFONTSIZE", 2, myContext)
+        var pos = klib.getIntPreferences("TEXTFONTSIZE", 2, myContext)
         pos = if (pos < 0) 2 else pos
         textFontSize = mutableStateOf(fontSizeList[pos])
         //  既存データの読込
@@ -57,7 +58,7 @@ class MemoViewModel(context: Context): ViewModel() {
         if (memoList.count() == 0)
             n = newData()                   //  既存データなし
         else if (memoText.value.length == 0){
-            n = getIntPreferences("CURRENTPAGENO", memoTitleList.count() - 1, myContext)
+            n = klib.getIntPreferences("CURRENTPAGENO", memoTitleList.count() - 1, myContext)
         }
         setDisplay(n)
     }
@@ -68,9 +69,9 @@ class MemoViewModel(context: Context): ViewModel() {
     fun dbClose() {
         //  文字サイズ
         val n = fontSizeList.indexOf<TextUnit>(textFontSize.value)
-        setIntPreferences(n, "TEXTFONTSIZE", myContext)
+        klib.setIntPreferences(n, "TEXTFONTSIZE", myContext)
         //  ページ番号保存
-        setIntPreferences(curPageNo(), "CURRENTPAGENO", myContext)
+        klib.setIntPreferences(curPageNo(), "CURRENTPAGENO", myContext)
         //  内容をDBに保存
         save()              //  現ページを登録
         saveList()          //  全ページをDBに保存
@@ -125,7 +126,7 @@ class MemoViewModel(context: Context): ViewModel() {
      * オプションメニュー
      */
     fun optionMenu(){
-        setMenuDialog(myContext, "オプションメニュー", optionMenu, iOptionOperation)
+        klib.setMenuDialog(myContext, "オプションメニュー", optionMenu, iOptionOperation)
     }
 
     /**
@@ -145,7 +146,7 @@ class MemoViewModel(context: Context): ViewModel() {
      */
     fun newData(text: String = ""): Int {
         Toast.makeText(myContext, text, Toast.LENGTH_LONG)
-        var title = getNowDate()
+        var title = klib.getNowDate()
         if (memoList.count() == 0 || !memoList.containsKey(title))
             memoList.put(title, text)
         makeTitleList()
@@ -215,16 +216,48 @@ class MemoViewModel(context: Context): ViewModel() {
      */
     var iOptionOperation = Consumer<String> { s ->
         if (s.compareTo(optionMenu[0]) == 0) {
-            actionSend(memoText.value, myContext)
+            //  計算処理
+            calc()
         } else if (s.compareTo(optionMenu[1]) == 0) {
-            setMenuDialog(myContext, "文字サイズ", fontSizeListMenu, iFontSizeOperation)
+            //  共有
+            klib.actionSend(memoText.value, myContext)
         } else if (s.compareTo(optionMenu[2]) == 0) {
-            messageDialog(myContext,"確認", "すべてのデータを削除します", iRemoveDataAll)
+            //  文字サイズ選択
+            klib.setMenuDialog(myContext, "文字サイズ", fontSizeListMenu, iFontSizeOperation)
+        } else if (s.compareTo(optionMenu[3]) == 0) {
+            //  全データ削除
+            klib.messageDialog(myContext,"確認", "すべてのデータを削除します", iRemoveDataAll)
         }
     }
 
     /**
-     * 表示中のメモの位置
+     * 文字列の中に = がある時、そこまでの数値と演算子を抜き出して計算し = の後ろに計算結果を挿入
+     */
+    fun calc() {
+        val scalc = SCalc()
+        var text = memoText.value
+        var start = if (0 <= text.indexOf("==", 0))
+                        text.indexOf("==", 0) + 2 else 0
+        var pos = text.indexOf('=', start)
+        while (0 <= pos) {
+            //  数式の抽出
+            var express = klib.convertIntoHalfFromFull(text.substring(start, pos))
+            //  数式を計算
+            val result = scalc.expression(express).toString()
+            //  =の後ろに計算むっかを挿入
+            text = text.substring(0, pos + 1) + result +
+                    if (pos  < text.length)  (" " + text.substring(pos + 1,text.length)) else ""
+            //  次の数式の位置
+            start = pos + 1 + result.length + 1
+            start = if (0 <= text.indexOf("==", start))
+                        text.indexOf("==", start) + 2 else start
+            pos = text.indexOf('=', start)
+        }
+        memoText.value = text
+    }
+
+    /**
+     * 文字サイズの選択変更
      */
     var iFontSizeOperation = Consumer<String> { s ->
         textFontSize = mutableStateOf(fontSizeList[fontSizeListMenu.indexOf(s)])
@@ -240,109 +273,4 @@ class MemoViewModel(context: Context): ViewModel() {
         setDisplay(n)
     }
 
-    //  ===  システム  ===
-
-    /**
-     * 共有処理(テキスト)
-     */
-    fun actionSend(text: String, context: Context) {
-        val sendIntent = Intent().apply {
-            action = Intent.ACTION_SEND
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, text)
-        }
-        val shareIntent = Intent.createChooser(sendIntent, null)
-        context.startActivity(shareIntent)
-    }
-
-
-    //  ===  時間・日付処理  ===
-
-    /**
-     * 現在の年を取得
-     */
-    fun getNowDate(form:String = "yyyyMMdd_HHmmss"): String {
-        val ldt = LocalDateTime.now()
-        val formatter = DateTimeFormatter.ofPattern(form)
-        return ldt.format(formatter)
-    }
-
-    //  === ダイヤログ関数 ===
-
-    /**
-     * メッセージをダイヤログ表示し、OKの時に指定の関数にメッセージの内容を渡して処理するを処理する
-     * 関数インターフェースの例
-     *  var iDelListOperation = new Consumer<String> { s ->
-     *      mDataMap.remove(s)      //  ダイヤログで指定された文字列をリストから削除
-     *  }
-     * 関数の呼び出し方法
-     *      ylib.messageDialog(mC, "計算式の削除",mTitleBuf, iDelListOperation);
-     * c            コンテキスト
-     * title        ダイヤログのタイトル
-     * message      メッセージ
-     * operation    処理する関数インタフェース
-     */
-    fun messageDialog(c: Context, title: String, message: String, operation: Consumer<String>) {
-        AlertDialog.Builder(c)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton( "OK") {
-                    dialog, which -> operation.accept("OK")
-            }
-            .setNegativeButton( "Cancel") {
-                    dialog, which ->
-            }
-            .show()
-    }
-
-    /**
-     * メニュー選択ダイヤログ
-     * 選択したメニューは関数インタフェースを使って取得
-     *    var iPostionSelectOperation = Consumer<String> { s ->
-     *        Toast.makeText(this, s, Toast.LENGTH_LONG).show()
-     *        Log.d(TAG,"inputDialog: " + s)
-     *    }
-     * @param title     ダイヤログのタイトル
-     * @param menu      メニューデータ(配列)
-     * @param operation 処理する関数(関数インターフェース)
-     */
-    fun setMenuDialog(c: Context, title: String, menu: List<String>, operation: Consumer<String>) {
-        AlertDialog.Builder(c)
-            .setTitle(title)
-            .setItems(menu.toTypedArray(), DialogInterface.OnClickListener { dialog, which ->
-//                    Toast.makeText(c, which.toString() + " " + menu[which] + " が選択", Toast.LENGTH_LONG).show()
-                operation.accept(menu[which])
-            })
-            .create()
-            .show()
-    }
-
-    //  === システム関連 ===
-
-    /**
-     * プリファレンスから数値(int)を取得
-     * @param key
-     * @param default
-     * @param context
-     * @return
-     */
-    fun getIntPreferences(key: String, default: Int, context: Context): Int {
-        val prefs: SharedPreferences
-        prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        return prefs.getInt(key, default)
-    }
-
-    /**
-     * プリファレンスに数値(int)を設定
-     * @param value
-     * @param key
-     * @param context
-     */
-    fun setIntPreferences(value: Int, key: String, context: Context?) {
-        val prefs: SharedPreferences
-        prefs = PreferenceManager.getDefaultSharedPreferences(context)
-        val editor = prefs.edit()
-        editor.putInt(key, value)
-        editor.commit()
-    }
 }
