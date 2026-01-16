@@ -2,22 +2,13 @@ package co.jp.yoshida.memoapp
 
 import android.app.AlertDialog
 import android.content.Context
-import android.content.DialogInterface
-import android.content.Intent
-import android.content.SharedPreferences
-import android.preference.PreferenceManager
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContentProviderCompat.requireContext
-import androidx.core.content.ContextCompat.startActivity
 import androidx.core.util.Consumer
 import androidx.lifecycle.ViewModel
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import kotlin.math.max
 
 /**
@@ -53,14 +44,15 @@ class MemoViewModel(context: Context): ViewModel() {
         loadList()                          //  DBからの読込
         var n = 0
         //  共有データあり
-        if (0 < memoText.value.length)
+        if (0 < memoText.value.length) {
             n = newData(memoText.value)
-        if (memoList.count() == 0)
+        } else if (memoList.count() == 0) {
             n = newData()                   //  既存データなし
-        else if (memoText.value.length == 0){
+        } else if (memoText.value.length == 0) {
             n = klib.getIntPreferences("CURRENTPAGENO", memoTitleList.count() - 1, myContext)
         }
         setDisplay(n)
+        Log.d(TAG, "init "+memoList.count())
     }
 
     /**
@@ -76,6 +68,8 @@ class MemoViewModel(context: Context): ViewModel() {
         save()              //  現ページを登録
         saveList()          //  全ページをDBに保存
         database.close()
+        memoTitle.value = ""
+        memoText.value = ""
     }
 
     /**
@@ -145,7 +139,6 @@ class MemoViewModel(context: Context): ViewModel() {
      * return: 新規データの番号
      */
     fun newData(text: String = ""): Int {
-        Toast.makeText(myContext, text, Toast.LENGTH_LONG)
         var title = klib.getNowDate()
         if (memoList.count() == 0 || !memoList.containsKey(title))
             memoList.put(title, text)
