@@ -5,12 +5,21 @@ import android.content.Context
 import android.content.DialogInterface
 import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Point
+import android.graphics.PointF
+import android.os.Build
 import android.preference.PreferenceManager
+import android.view.Display
+import android.view.View
+import android.widget.EditText
 import androidx.core.util.Consumer
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import kotlin.math.atan2
+import kotlin.math.sqrt
 
 class KLib {
+
     //  ===  システム  ===
 
     /**
@@ -89,6 +98,31 @@ class KLib {
     }
 
     /**
+     * 文字入力ダイヤログ
+     * 入力した文字は関数インタフェースを使って取得
+     *     var iInputOperation = Consumer<String> { s ->
+     *         Toast.makeText(this, s, Toast.LENGTH_LONG).show()
+     *         Log.d(TAG,"inputDialog: " + s)
+     *     }
+     * @param c         コンテキスト
+     * @param title     ダイヤログのタイトル
+     * @param message   デフォルトメッセージ
+     * @param operation 処理する関数(関数インターフェース)
+     */
+    fun setInputDialog(c: Context, title: String, message: String, operation: Consumer<String>) {
+        val editText = EditText(c)
+        editText.setText(message)
+        val dialog = AlertDialog.Builder(c)
+        dialog.setTitle(title)
+        dialog.setView(editText)
+        dialog.setPositiveButton("OK", DialogInterface.OnClickListener {
+                dialog, which -> operation.accept(editText.text.toString())
+        })
+        dialog.setNegativeButton("Cancel", null)
+        dialog.show()
+    }
+
+    /**
      * メニュー選択ダイヤログ
      * 選択したメニューは関数インタフェースを使って取得
      *    var iPostionSelectOperation = Consumer<String> { s ->
@@ -137,6 +171,57 @@ class KLib {
         val editor = prefs.edit()
         editor.putInt(key, value)
         editor.commit()
+    }
+
+    /**
+     * pixelからdpへの変換
+     * @param px
+     * @param context
+     * @return float dp
+     */
+    fun convertPx2Dp(px: Int, context: Context): Float {
+        val metrics = context.getResources().getDisplayMetrics()
+        return px / metrics.density
+    }
+
+    /**
+     * OSのバージョン取得
+     */
+    fun getOSVersion(): String {
+        return Build.VERSION.RELEASE
+    }
+
+//    fun getScreenSize(context: View):Point {
+//        val display: Display = context.windowManager.defaultDisplay
+//        val point = Point()
+//        display.getSize(point)
+//        return point
+//    }
+
+    //  ===  数値計算  ===
+
+    /**
+     * 2点間の距離を求める
+     * @param ps    始点
+     * @param pe    終点
+     * @return      距離
+     */
+    fun disPoint2(ps: PointF, pe: PointF): Float {
+        val dx = (ps.x - pe.x).toDouble()
+        val dy = (ps.y - pe.y).toDouble()
+        return sqrt(dx * dx + dy * dy).toFloat()
+    }
+
+    /**
+     * 始点に対する角度(rad)
+     * @param ps    始点
+     * @param pe    終点
+     * @return      角度(rad)
+     */
+    fun angle(ps: PointF, pe: PointF): Float {
+        val dx = (ps.x - pe.x).toDouble()
+        val dy = (ps.y - pe.y).toDouble()
+        return atan2(dy, dx).toFloat()
     }
 
 }

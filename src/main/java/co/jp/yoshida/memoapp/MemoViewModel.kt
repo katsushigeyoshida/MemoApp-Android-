@@ -1,6 +1,5 @@
 package co.jp.yoshida.memoapp
 
-import android.app.AlertDialog
 import android.content.Context
 import android.util.Log
 import androidx.compose.runtime.MutableState
@@ -27,7 +26,7 @@ class MemoViewModel(context: Context): ViewModel() {
 
     val fontSizeList = listOf(8.sp, 12.sp, 16.sp, 24.sp, 32.sp, 40.sp)
     val fontSizeListMenu = listOf("8.sp", "12.sp", "16.sp", "24.sp", "32.sp", "40.sp")
-    val optionMenu = listOf("計算", "共有", "文字サイズ選択", "全データ削除")
+    val optionMenu = listOf("計算", "共有", "検索フィルタ", "文字サイズ選択", "全データ削除")
 
     val database: DatabaseHelper = DatabaseHelper(context)
     val klib = KLib()
@@ -79,12 +78,13 @@ class MemoViewModel(context: Context): ViewModel() {
         save()
         var n = newData()
         setDisplay(n)
+        makeTitleList()
     }
 
     /**
      * 現在表示している次のデータ
      */
-    fun nexeDisplay() {
+    fun nextDisplay() {
         save()
         var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
         var n = memoTitleList.indexOf(title)
@@ -156,7 +156,6 @@ class MemoViewModel(context: Context): ViewModel() {
         } else {
             memoList.put(title, memoText.value)
         }
-        makeTitleList()
     }
 
     /**
@@ -194,12 +193,14 @@ class MemoViewModel(context: Context): ViewModel() {
     /**
      * memoListからtitleListを作成
      */
-    fun makeTitleList(){
+    fun makeTitleList(searchWord: String = "") {
         memoTitleList.clear()
         if (0 < memoList.count()) {
 //            memoTitleList = memoList.keys.toList() as MutableList<String>
-            for (title in memoList.keys)
-                memoTitleList.add(title)
+            for (memo in memoList) {
+                if (0 <= memo.value.indexOf(searchWord))
+                    memoTitleList.add(memo.key)
+            }
             memoTitleList.sort()
         }
     }
@@ -215,9 +216,12 @@ class MemoViewModel(context: Context): ViewModel() {
             //  共有
             klib.actionSend(memoText.value, myContext)
         } else if (s.compareTo(optionMenu[2]) == 0) {
+            //  検索フィルタ
+            findFilter()
+        } else if (s.compareTo(optionMenu[3]) == 0) {
             //  文字サイズ選択
             klib.setMenuDialog(myContext, "文字サイズ", fontSizeListMenu, iFontSizeOperation)
-        } else if (s.compareTo(optionMenu[3]) == 0) {
+        } else if (s.compareTo(optionMenu[4]) == 0) {
             //  全データ削除
             klib.messageDialog(myContext,"確認", "すべてのデータを削除します", iRemoveDataAll)
         }
@@ -247,6 +251,21 @@ class MemoViewModel(context: Context): ViewModel() {
             pos = text.indexOf('=', start)
         }
         memoText.value = text
+    }
+
+    /**
+     * 検索ワード入力ダイヤログ
+     */
+    fun findFilter() {
+        klib.setInputDialog(myContext, "検索文字列", "",iFindFilter)
+    }
+
+    /**
+     * 検索ワードフィルタリング
+     */
+    var iFindFilter = Consumer<String> {s ->
+        makeTitleList(s)
+        setDisplay(memoTitleList.lastIndex)
     }
 
     /**
