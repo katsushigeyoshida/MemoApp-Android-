@@ -25,8 +25,8 @@ class MemoViewModel(context: Context): ViewModel() {
     var memoTitleList = mutableListOf<String>()
 
     val fontSizeList = listOf(8.sp, 12.sp, 16.sp, 24.sp, 32.sp, 40.sp)
-    val fontSizeListMenu = listOf("8.sp", "12.sp", "16.sp", "24.sp", "32.sp", "40.sp")
-    val optionMenu = listOf("計算", "共有", "検索フィルタ", "文字サイズ選択", "全データ削除")
+    val fontSizeListMenu = listOf("8.sp", "10.sp", "12.sp", "14.sp", "16.sp", "20.sp", "24.sp", "32.sp", "40.sp")
+    val optionMenu = listOf("計算", "共有", "検索フィルタ", "最新日付に変更","文字サイズ選択", "全データ削除")
 
     val database: DatabaseHelper = DatabaseHelper(context)
     val klib = KLib()
@@ -128,7 +128,13 @@ class MemoViewModel(context: Context): ViewModel() {
      * n: 表示するデータの番号
      */
     fun setDisplay(n: Int = -1) {
+        memoText.value = ""
         if (0 <= n && n < memoTitleList.count()) {
+            memoTitle.value = memoTitleList[n] + " " + getCount(memoTitleList[n])
+            memoText.value = memoList[memoTitleList[n]].toString()
+        } else {
+            var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
+            var n = memoTitleList.indexOf(title)
             memoTitle.value = memoTitleList[n] + " " + getCount(memoTitleList[n])
             memoText.value = memoList[memoTitleList[n]].toString()
         }
@@ -219,9 +225,13 @@ class MemoViewModel(context: Context): ViewModel() {
             //  検索フィルタ
             findFilter()
         } else if (s.compareTo(optionMenu[3]) == 0) {
+            //  最新日付に変更
+            val n = updateDate()
+            setDisplay(n)
+        } else if (s.compareTo(optionMenu[4]) == 0) {
             //  文字サイズ選択
             klib.setMenuDialog(myContext, "文字サイズ", fontSizeListMenu, iFontSizeOperation)
-        } else if (s.compareTo(optionMenu[4]) == 0) {
+        } else if (s.compareTo(optionMenu[5]) == 0) {
             //  全データ削除
             klib.messageDialog(myContext,"確認", "すべてのデータを削除します", iRemoveDataAll)
         }
@@ -254,6 +264,21 @@ class MemoViewModel(context: Context): ViewModel() {
     }
 
     /**
+     * メモの日付を最新に更新する
+     */
+    fun updateDate():Int {
+        var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
+        var n = memoTitleList.indexOf(title)
+        if (memoList.containsKey(title))
+            memoList.remove(title)
+        title = klib.getNowDate()
+        if (memoList.count() == 0 || !memoList.containsKey(title))
+            memoList.put(title, memoText.value)
+        makeTitleList()
+        return memoTitleList.indexOf(title)
+    }
+
+    /**
      * 検索ワード入力ダイヤログ
      */
     fun findFilter() {
@@ -273,6 +298,7 @@ class MemoViewModel(context: Context): ViewModel() {
      */
     var iFontSizeOperation = Consumer<String> { s ->
         textFontSize = mutableStateOf(fontSizeList[fontSizeListMenu.indexOf(s)])
+        setDisplay()
     }
 
     /**
