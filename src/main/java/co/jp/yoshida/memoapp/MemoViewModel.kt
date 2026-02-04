@@ -115,6 +115,13 @@ class MemoViewModel(activity: ComponentActivity): ViewModel() {
      * 表示しているデータの削除
      */
     fun remove() {
+        klib.messageDialog(myActivity, "確認", "このページを削除します", iRemoveData)
+    }
+
+    /**
+     * カレントページの削除
+     */
+    var iRemoveData = Consumer<String> { s->
         var title = memoTitle.value.substring(0, memoTitle.value.indexOf(' '))
         if (memoList.containsKey(title))
             memoList.remove(title)

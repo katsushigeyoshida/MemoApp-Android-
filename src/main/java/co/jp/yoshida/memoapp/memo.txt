@@ -48,17 +48,24 @@ MemoApp
 ・分類
 ・特定接頭語から抽出する目次リスト(ページ単位)の
 ・テキスト内の数値計算(集計)(計算)
-・テキストファイルへのエクスポートまたはインポート機能(共有機能)
+・テキストファイルへのエクスポートまたはインポート機能(共有機能,バックアップ)
 ・画像などのファイルの添付(内部データ/外部参照)
-・文字選択とスワイプにページ切り替えが競合会費が必要
+・文字選択とスワイプにページ切り替えが競合回避が必要(文字列の選択の有無を確認)
 
 実現方法
-・テキスト(TextField)のカーソル位置や選択文字を認識するために Stringではなく TextFieldValue を使う
+・テキスト(TextField)のカーソル位置検出方法
+　カーソル位置や選択文字を認識するために Stringではなく TextFieldValue を使う
+    //  変数宣言
     val memoText: MutableState<TextFieldValue> = mutableStateOf(TextFieldValue())
+    //  文字列
+    var text = memoText.value.text
+    //  選択位置
+    var n = memoText.value.selection.start
 
+    //  TextFieldの設定
         TextField(
-            value = memoText,
-            onValueChange = { memoText = it },
+            value = memoText,                   //  TextFieldValue
+            onValueChange = { memoText = it },  //  memoTextに設定
             modifier = Modifier
                 .fillMaxWidth()
                 .height(viewModel.memoFieldHeight().dp)
@@ -68,7 +75,7 @@ MemoApp
 
 
 履歴
-2026/02/04 目次機能を追加
+2026/02/04 目次機能を追加,削除の確認メッセージ追加
 2026/02/02 横向き時のレイアウト修正,日時の挿入機能を追加
 2026/01/27 日付更新機能とバグ修正
 2026/01/15 計算機能追加
