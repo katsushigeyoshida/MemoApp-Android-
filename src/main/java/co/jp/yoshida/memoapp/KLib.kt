@@ -13,8 +13,12 @@ import android.view.Display
 import android.view.View
 import android.widget.EditText
 import androidx.core.util.Consumer
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.chrono.JapaneseDate
 import java.time.format.DateTimeFormatter
+import java.time.format.TextStyle
+import java.util.Locale
 import kotlin.math.atan2
 import kotlin.math.sqrt
 
@@ -68,6 +72,31 @@ class KLib {
         val formatter = DateTimeFormatter.ofPattern(form)
         return ldt.format(formatter)
     }
+
+    /**
+     * 和暦の取得
+     */
+    fun getWareki(date: LocalDate = LocalDate.now()): String {
+        // JapaneseDate に変換
+        val japaneseDate = JapaneseDate.from(date)
+
+        // 和暦フォーマット（元号＋年＋月＋日）
+        val formatter = DateTimeFormatter
+            .ofPattern("GGGGy年M月d日", Locale.JAPAN)
+
+        return formatter.format(japaneseDate)
+    }
+
+    /**
+     * 曜日を取得
+     * locale : 形式　Locale.JAPANESE/Locale.ENGLISH
+     * return : "月".../Mon...
+     */
+    fun getDayOfWeek(locale: Locale = Locale.JAPANESE, date: LocalDate = LocalDate.now()): String {
+        val dayOfWeek = date.dayOfWeek // MONDAY, TUESDAY, ...
+        return dayOfWeek.getDisplayName(TextStyle.SHORT, locale) // "月", "火" など
+    }
+
 
     //  === ダイヤログ関数 ===
 

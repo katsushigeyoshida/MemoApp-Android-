@@ -1,12 +1,8 @@
 package co.jp.yoshida.memoapp
 
-import android.content.Context
 import android.content.Intent
 import android.graphics.Point
-import android.graphics.PointF
-import android.os.Build
 import android.os.Bundle
-import android.util.Log
 import android.view.Display
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -28,6 +24,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -35,6 +32,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -53,12 +51,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        //  スクリーンサイズの取得
-        val point = getScreenSize()
-        //  入力フィールドの高さを求める
-        var h = klib.convertPx2Dp(point.y, this)
-        val osver = klib.getOSVersion().toInt()
-        h -= if (14 < osver) 160f else if (10 < osver) 80f else 120f
 
         setContent {
             MyApplication4Theme {
@@ -67,7 +59,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    MyMemo(viewModel, h)
+                    MyMemo(viewModel)
                 }
             }
         }
@@ -75,7 +67,7 @@ class MainActivity : ComponentActivity() {
         if (intent != null) {
             val type = intent.type
             if (type != null && type.startsWith("text/"))
-                viewModel.memoText.value = intent.getStringExtra((Intent.EXTRA_TEXT)).toString()
+                viewModel.memoText.value = viewModel.memoText.value.copy(intent.getStringExtra((Intent.EXTRA_TEXT)).toString())
         }
     }
 
@@ -84,7 +76,7 @@ class MainActivity : ComponentActivity() {
      */
     override fun onResume() {
         super.onResume()
-        viewModel.init(this)
+        viewModel.init()
         viewModel.setDisplay()
     }
 
@@ -95,41 +87,34 @@ class MainActivity : ComponentActivity() {
         viewModel.dbClose()
         super.onPause()
     }
-
-    /**
-     * スクリーンサイズの取得
-     */
-    fun getScreenSize():Point {
-        val display: Display = this.windowManager.defaultDisplay
-        val point = Point()
-        display.getSize(point)
-        return point
-    }
 }
 
 @Composable
-fun MyMemo(viewModel: MemoViewModel, height: Float) {
+fun MyMemo(viewModel: MemoViewModel) {
 
     var memoTitle: String by viewModel.memoTitle
-    var memoText: String by viewModel.memoText
+    var memoText: TextFieldValue by viewModel.memoText
     var textFontSize: TextUnit by viewModel.textFontSize
     var offsetX by remember { mutableFloatStateOf(0f) }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(top = 16.dp, bottom = 40.dp, start = 8.dp, end = 8.dp)
-            //  フリック処理
+            .padding(top = 16.dp, bottom = 8.dp, start = 8.dp, end = 8.dp)
+            //  スワイプ処理
             .pointerInput(Unit) {
                 detectHorizontalDragGestures { change, dragAmount ->
                     change.consume()
                     offsetX += dragAmount
-                    if (200 < offsetX) {
-                        viewModel.nextDisplay()
-                        offsetX = 0f
-                    } else if (-200 > offsetX) {
-                        viewModel.prevDisplay()
-                        offsetX = 0f
+                    if (1 > viewModel.getSelectCount()) {
+                        //  文字選択がない状態でページ切り替え
+                        if (200 < offsetX) {
+                            viewModel.nextDisplay()
+                            offsetX = 0f
+                        } else if (-200 > offsetX) {
+                            viewModel.prevDisplay()
+                            offsetX = 0f
+                        }
                     }
                 }
             }
@@ -152,14 +137,14 @@ fun MyMemo(viewModel: MemoViewModel, height: Float) {
             onValueChange = { memoText = it },
             modifier = Modifier
                 .fillMaxWidth()
-                .height(height.dp)
+                .height(viewModel.memoFieldHeight().dp)
             ,
             textStyle = TextStyle(fontSize = textFontSize)
         )
         //  操作ボタン
         Row(
             modifier = Modifier
-                .padding(top = 8.dp)
+                .padding(top = 0.dp)
                 .offset(y = 0.dp)
         ) {
             Button(
