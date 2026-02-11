@@ -215,6 +215,7 @@ class KLib {
 
     /**
      * OSのバージョン取得
+     * return : (e.g., "14", "13", "12")
      */
     fun getOSVersion(): String {
         return Build.VERSION.RELEASE
