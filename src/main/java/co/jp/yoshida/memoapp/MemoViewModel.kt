@@ -33,7 +33,7 @@ class MemoViewModel(activity: ComponentActivity): ViewModel() {
 
     val fontSizeList = listOf(8.sp, 10.sp, 12.sp, 14.sp, 16.sp, 20.sp, 24.sp, 32.sp, 40.sp)
     val fontSizeListMenu = listOf("8.sp", "10.sp", "12.sp", "14.sp", "16.sp", "20.sp", "24.sp", "32.sp", "40.sp")
-    val optionMenu = listOf("計算", "挿入", "目次", "共有", "検索フィルタ", "最新日付に変更","文字サイズ選択", "全データ削除")
+    val optionMenu = listOf("計算", "挿入", "目次", "共有", "検索フィルタ", "最新日付に変更","文字サイズ選択", "URLを開く", "全データ削除")
     val insertMenu = listOf("日付(YYYY年MM月DD日)", "日付(YYYY/MM/DD)", "日付(令和YY年MM月DD日)",
                             "曜日(SUN)", "曜日(日)","時間(HH時MM分SS秒)", "時間(HH:MM:SS")
 
@@ -255,6 +255,9 @@ class MemoViewModel(activity: ComponentActivity): ViewModel() {
             //  文字サイズ選択
             klib.setMenuDialog(myActivity, "文字サイズ", fontSizeListMenu, iFontSizeOperation)
         } else if (s.compareTo(optionMenu[7]) == 0) {
+            //  URLを開く
+            urlOpen()
+        } else if (s.compareTo(optionMenu[8]) == 0) {
             //  全データ削除
             klib.messageDialog(myActivity,"確認", "すべてのデータを削除します", iRemoveDataAll)
         }
@@ -429,6 +432,32 @@ class MemoViewModel(activity: ComponentActivity): ViewModel() {
         memoTitleList.clear()
         var n = newData()
         setDisplay(n)
+    }
+
+    /**
+     * カーソル位置のURLアドレスのWebページを開く
+     */
+    fun urlOpen() {
+        var text = memoText.value.text
+        var n = memoText.value.selection.start
+        var i = text.indexOf("https://")
+        var start = -1
+        while (0 <= i && i <= n) {
+            start = i
+            i = text.indexOf("https://", i + 1)
+        }
+        if (0 <= start) {
+            var end = text.indexOf(' ', start)
+            if (end < 0) {
+                end = text.indexOf('\n', start)
+                if (end < 0)
+                    end = text.length
+            }
+            if (start < end ) {
+                Log.d(TAG, "URL: "+text.substring(start, end))
+                klib.webDisp(myActivity, text.substring(start, end))
+            }
+        }
     }
 
     /**

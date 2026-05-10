@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Point
 import android.graphics.PointF
+import android.net.Uri
 import android.os.Build
 import android.preference.PreferenceManager
 import android.view.Display
@@ -174,6 +175,17 @@ class KLib {
     }
 
     //  === システム関連 ===
+
+    /**
+     *  URLのWeb表示をする
+     *  c       コンテキスト
+     *  url     表示するURLアドレス
+     */
+    fun webDisp(c: Context, url: String?) {
+        val uri = Uri.parse(url)
+        val intent = Intent(Intent.ACTION_VIEW, uri)
+        c.startActivity(intent)
+    }
 
     /**
      * プリファレンスから数値(int)を取得
