@@ -108,10 +108,10 @@ fun MyMemo(viewModel: MemoViewModel) {
                     offsetX += dragAmount
                     if (1 > viewModel.getSelectCount()) {
                         //  文字選択がない状態でページ切り替え
-                        if (200 < offsetX) {
+                        if (100 < offsetX) {
                             viewModel.nextDisplay()
                             offsetX = 0f
-                        } else if (-200 > offsetX) {
+                        } else if (-100 > offsetX) {
                             viewModel.prevDisplay()
                             offsetX = 0f
                         }

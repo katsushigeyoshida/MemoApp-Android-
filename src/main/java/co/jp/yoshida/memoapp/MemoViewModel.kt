@@ -61,13 +61,13 @@ class MemoViewModel(activity: ComponentActivity): ViewModel() {
             n = klib.getIntPreferences("CURRENTPAGENO", memoTitleList.count() - 1, myActivity)
         }
         setDisplay(n)
-        Log.d(TAG, "init "+memoList.count())
     }
 
     /**
      * 終了処理
      */
     fun dbClose() {
+        save()
         //  文字サイズ
         val n = fontSizeList.indexOf<TextUnit>(textFontSize.value)
         klib.setIntPreferences(n, "TEXTFONTSIZE", myActivity)
@@ -229,9 +229,10 @@ class MemoViewModel(activity: ComponentActivity): ViewModel() {
     }
 
     /**
-     * 文字サイズ変更
+     * オプション機能
      */
     var iOptionOperation = Consumer<String> { s ->
+        save()
         if (s.compareTo(optionMenu[0]) == 0) {
             //  計算処理
             calc()
@@ -297,7 +298,7 @@ class MemoViewModel(activity: ComponentActivity): ViewModel() {
     }
 
     /**
-     * 単語の挿入処理
+     * 文字列挿入機能
      */
     var iInsertOperation = Consumer<String> { s ->
         var insertWord = ""
