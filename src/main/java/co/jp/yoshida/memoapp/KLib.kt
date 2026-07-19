@@ -63,6 +63,17 @@ class KLib {
         return str
     }
 
+    /**
+     * 文字列を16進表記文字列に変換(全角未対応)
+     */
+    fun text2HexString(text: String): String {
+        var chars = text.toCharArray()
+        var buf = ""
+        for (c in chars)
+            buf += c.code.toByte().toString(16) + " "
+        return buf
+    }
+
     //  ===  時間・日付処理  ===
 
     /**

@@ -3,6 +3,7 @@ package co.jp.yoshida.memoapp
 import android.graphics.Point
 import android.util.Log
 import android.view.Display
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
@@ -448,14 +449,15 @@ class MemoViewModel(activity: ComponentActivity): ViewModel() {
             i = text.indexOf("https://", i + 1)
         }
         if (0 <= start) {
+            //  実機で\n,\rがindexOfで検出できないので代替えでスペースのの置き換える
+            text = text.replace('\n', ' ')
+            text = text.replace('\r', ' ')
             var end = text.indexOf(' ', start)
-            if (end < 0) {
-                end = text.indexOf('\n', start)
-                if (end < 0)
-                    end = text.length
-            }
+            if (end < 0)
+                end = text.length
             if (start < end ) {
                 Log.d(TAG, "URL: "+text.substring(start, end))
+//                Toast.makeText(myActivity, klib.text2HexString(text.substring(start, end)), Toast.LENGTH_LONG).show()
                 klib.webDisp(myActivity, text.substring(start, end))
             }
         }
